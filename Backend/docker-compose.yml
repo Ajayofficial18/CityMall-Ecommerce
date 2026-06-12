@@ -1,0 +1,150 @@
+#services:
+#
+#  postgres:
+#    container_name: ms_postgres_sql
+#    image: postgres
+#    environment:
+#      POSTGRES_USER: ajaynile
+#      POSTGRES_PASSWORD: ajaynile
+#      PGDATA: /data/postgres
+#    volumes:
+#      - postgres:/data/postgres
+#    ports:
+#      - "5433:5432"
+#    networks:
+#      - citymall-network
+#    restart: unless-stopped
+#
+#  pgadmin:
+#    container_name: ms_pgadmin
+#    image: dpage/pgadmin4
+#    environment:
+#      PGADMIN_DEFAULT_EMAIL: pgadmin@pgadmin.org
+#      PGADMIN_DEFAULT_PASSWORD: admin
+#      PGADMIN_CONFIG_SERVER_MODE: 'False'
+#    volumes:
+#      - pgadmin:/var/lib/pgadmin
+#    ports:
+#      - 5050:80
+#    networks:
+#      - citymall-network
+#    restart: unless-stopped
+#
+##  frontend:
+##    container_name: citymall_frontend
+##    build: ./frontend/city-mall-frontend
+##    ports:
+##      - "5173:5173"
+##    networks:
+##      - citymall-network
+#
+#  mongodb:
+#    image: mongo
+#    container_name: mongodb
+#    restart: always
+#    ports:
+#      - 27017:27017
+#    volumes:
+#      - mongo:/data/db
+#    networks:
+#      - citymall-network
+#
+#  mongo-express:
+#    image: mongo-express
+#    container_name: mongo_express
+#    restart: always
+#    ports:
+#      - 8081:8081
+#    environment:
+#      ME_CONFIG_MONGODB_SERVER: mongodb
+#    networks:
+#      - citymall-network
+#
+#  zookeeper:
+#    image: confluentinc/cp-zookeeper:7.5.0
+#    container_name: zookeeper
+#    environment:
+#      ZOOKEEPER_SERVER_ID: 1
+#      ZOOKEEPER_CLIENT_PORT: 2181
+#      ZOOKEEPER_TICK_TIME: 2000
+#    ports:
+#      - "22181:2181"
+#    networks:
+#      - citymall-network
+#
+#  kafka:
+#    image: confluentinc/cp-kafka:7.5.0
+#    container_name: ms_kafka
+#    ports:
+#      - "9092:9092"
+#    depends_on:
+#      - zookeeper
+#    environment:
+#      KAFKA_BROKER_ID: 1
+#      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+#      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+#      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#    networks:
+#      - citymall-network
+#
+#  zipkin:
+#    image: openzipkin/zipkin
+#    container_name: zipkin
+#    ports:
+#      - "9411:9411"
+#    networks:
+#      - citymall-network
+#
+#  mail-dev:
+#    container_name: ms_mail_dev
+#    image: maildev/maildev
+#    ports:
+#      - 1080:1080
+#      - 1025:1025
+#    networks:
+#      - citymall-network
+#
+#networks:
+#  citymall-network:
+#    driver: bridge
+#
+#volumes:
+#  postgres:
+#  pgadmin:
+#  mongo:
+
+
+services:
+
+  postgres:
+    image: postgres:16
+    container_name: citymall-postgres
+
+    environment:
+      POSTGRES_DB: customerdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+    ports:
+      - "5435:5432"
+
+    volumes:
+      - citymall_postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: citymall-pgadmin
+
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@citymall.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+
+    ports:
+      - "5050:80"
+
+    depends_on:
+      - postgres
+
+volumes:
+  citymall_postgres_data:
