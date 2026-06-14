@@ -1,0 +1,149 @@
+.pd-wrapper {
+  display: flex;
+  gap: 40px;
+  padding-top: 32px;
+  padding-bottom: 48px;
+  align-items: flex-start;
+}
+
+/* Image */
+.pd-image-section {
+  flex-shrink: 0;
+  width: 380px;
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  position: sticky;
+  top: 72px;
+}
+
+.pd-image {
+  width: 100%;
+  height: 320px;
+  object-fit: contain;
+}
+
+/* Info */
+.pd-info-section {
+  flex: 1;
+}
+
+.pd-brand {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pd-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #131921;
+  line-height: 1.3;
+  margin-bottom: 12px;
+}
+
+.pd-rating {
+  margin-bottom: 12px;
+}
+
+.pd-divider {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 16px 0;
+}
+
+/* Price */
+.pd-price-block {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pd-price {
+  font-size: 28px;
+  font-weight: 800;
+  color: #131921;
+}
+
+.pd-mrp {
+  font-size: 14px;
+  color: #888;
+  text-decoration: line-through;
+}
+
+.pd-discount {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e53935;
+}
+
+.pd-savings {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #2e7d32;
+  font-weight: 600;
+}
+
+/* Description */
+.pd-description {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+/* Actions */
+.pd-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pd-btn {
+  padding: 13px 32px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.pd-btn-cart {
+  background: #f08c00;
+  color: white;
+}
+
+.pd-btn-cart:hover {
+  background: #e07b00;
+}
+
+.pd-btn-added {
+  background: #2e7d32;
+  opacity: 0.9;
+  cursor: default;
+}
+
+.pd-btn-buy {
+  background: #131921;
+  color: white;
+}
+
+.pd-btn-buy:hover {
+  background: #232f3e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pd-wrapper {
+    flex-direction: column;
+  }
+  .pd-image-section {
+    width: 100%;
+    position: static;
+  }
+}
