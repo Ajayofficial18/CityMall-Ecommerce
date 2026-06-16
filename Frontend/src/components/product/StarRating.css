@@ -1,0 +1,29 @@
+.star-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stars {
+  display: flex;
+}
+
+.star {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.star-full  { color: #f08c00; }
+.star-half  { color: #f08c00; }
+.star-empty { color: #ccc; }
+
+.star-score {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f08c00;
+}
+
+.star-count {
+  font-size: 12px;
+  color: #888;
+}
