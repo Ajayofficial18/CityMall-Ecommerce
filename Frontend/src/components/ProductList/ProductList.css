@@ -1,0 +1,44 @@
+.product-list {
+  padding: 12px 0;
+}
+
+.product-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.product-list-header h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.product-list-header button {
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.product-list-header button:hover {
+  text-decoration: underline;
+}
+
+.product-list-scroll {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.product-list-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+
+.product-list-scroll::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 4px;
+}
