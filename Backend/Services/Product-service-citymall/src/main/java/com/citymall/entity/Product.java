@@ -16,10 +16,19 @@ public class Product {
     @Id
     @GeneratedValue
     private Integer id;
+
+    @Column(nullable = false, length = 200)
     private String name;
+
+    @Column(length = 1000)
     private String description;
-    private double availableQuantity;
+
+    @Column(nullable = false)
+    private Integer availableQuantity;
+
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
+
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;

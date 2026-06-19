@@ -1,21 +1,23 @@
 package com.citymall.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
 import java.math.BigDecimal;
 
 public record ProductRequest(
-        Integer id,
-        @NotNull(message = "Product name is required")
+
+        @NotBlank(message = "Product name is required")
         String name,
-        @NotNull(message = "Product description is required")
+        @NotBlank(message = "Product description is required")
         String description,
         @Positive(message = "Available quantity should be positive")
-        double availableQuantity,
+        Integer availableQuantity,
         @Positive(message = "Price should be positive")
         BigDecimal price,
-        @NotNull(message = "Product category is required")
+        @NotNull
+        @Positive(message = "Category ID must be greater than 0")
         Integer categoryId
 ) {
 }

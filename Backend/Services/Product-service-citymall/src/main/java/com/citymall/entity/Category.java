@@ -11,12 +11,16 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
+@Table(name = "category", uniqueConstraints = { @UniqueConstraint(columnNames = "names")})
 public class Category {
 
     @Id
     @GeneratedValue
     private Integer id;
+
+    @Column(nullable = false, unique = true)
     private String name;
+
     private String description;
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
     private List<Product> products;

@@ -5,7 +5,9 @@ import com.citymall.dto.ProductResponse;
 import com.citymall.dto.PurchaseResponse;
 import com.citymall.entity.Category;
 import com.citymall.entity.Product;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProductMapper {
     public Product mapToProduct(ProductRequest productRequest){
         if(productRequest==null){
@@ -13,7 +15,6 @@ public class ProductMapper {
         }
 
         return Product.builder()
-                .id(productRequest.id())
                 .name(productRequest.name())
                 .description(productRequest.description())
                 .availableQuantity(productRequest.availableQuantity())
@@ -43,7 +44,7 @@ public class ProductMapper {
         );
     }
 
-    public PurchaseResponse mapToproductPurchaseResponse(Product product, double quantity) {
+    public PurchaseResponse mapToproductPurchaseResponse(Product product, Integer quantity) {
         if(product==null){
             return null;
         }
