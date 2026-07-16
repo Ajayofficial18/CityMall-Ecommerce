@@ -11,17 +11,18 @@ import java.util.List;
 @Getter
 @Setter
 @Entity
-@Table(name = "category", uniqueConstraints = { @UniqueConstraint(columnNames = "names")})
+@Table(name = "category")
 public class Category {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(nullable = false, unique = true)
     private String name;
 
     private String description;
+
     @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
     private List<Product> products;
 }
