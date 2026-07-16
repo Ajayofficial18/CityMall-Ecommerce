@@ -3,11 +3,10 @@ package com.citymall.mapper;
 import com.citymall.dto.ProductRequest;
 import com.citymall.dto.ProductResponse;
 import com.citymall.dto.PurchaseResponse;
-import com.citymall.entity.Category;
 import com.citymall.entity.Product;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 public class ProductMapper {
     public Product mapToProduct(ProductRequest productRequest){
         if(productRequest==null){
@@ -19,11 +18,6 @@ public class ProductMapper {
                 .description(productRequest.description())
                 .availableQuantity(productRequest.availableQuantity())
                 .price(productRequest.price())
-                .category(
-                        Category.builder()
-                                .id(productRequest.categoryId())
-                                .build()
-                )
                 .build();
     }
 
