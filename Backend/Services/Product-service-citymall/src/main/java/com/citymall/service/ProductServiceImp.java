@@ -32,11 +32,10 @@ public class ProductServiceImp implements ProductService {
 
     private final ProductRepository productRepository;
     private final CategoryRepository categoryRepository;
-    private final ProductMapper mapper;
+    private final ProductMapper productMapper;
 
-    /**
-     * Fetch product by id or throw ResourceNotFoundException.
-     */
+
+    // Fetch product by id or throw ResourceNotFoundException.
     private Product getProductOrThrow(Integer productId) {
 
         return productRepository.findById(productId)
@@ -48,9 +47,7 @@ public class ProductServiceImp implements ProductService {
                 });
     }
 
-    /**
-     * Fetch category by id or throw ResourceNotFoundException.
-     */
+    // Fetch category by id or throw ResourceNotFoundException.
     private Category getCategoryOrThrow(Integer categoryId) {
 
         return categoryRepository.findById(categoryId)
@@ -62,9 +59,7 @@ public class ProductServiceImp implements ProductService {
                 });
     }
 
-    /**
-     * Creates a new product after validating that the provided category exists.
-     */
+    // Creates a new product after validating that the provided category exists.
     @Override
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
@@ -75,18 +70,17 @@ public class ProductServiceImp implements ProductService {
         // Validate category existence
         Category category = getCategoryOrThrow(request.categoryId());
         // Map request to entity
-        Product product = mapper.mapToProduct(request);
+        Product product = productMapper.mapToProduct(request);
         // Assign managed Category entity
         product.setCategory(category);
         // persist order
         Product savedProduct = productRepository.save(product);
 
         log.info("Product created successfully. ProductId={}", savedProduct.getId());
-        return mapper.mapToProductResponse(savedProduct);
+        return productMapper.mapToProductResponse(savedProduct);
     }
-    /**
-     * Fetch product by id.
-     */
+
+    // Fetch product by id.
     @Override
     @Transactional(readOnly = true)
     public ProductResponse findProductById(Integer id) {
@@ -95,12 +89,10 @@ public class ProductServiceImp implements ProductService {
 
         Product product = getProductOrThrow(id);
 
-        return mapper.mapToProductResponse(product);
+        return productMapper.mapToProductResponse(product);
     }
 
-    /**
-     * Fetch paginated products.
-     */
+    // Fetch paginated products.
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> findAllProducts(int page, int size) {
@@ -109,12 +101,10 @@ public class ProductServiceImp implements ProductService {
 
         Pageable pageable = PageRequest.of(page, size);
         return productRepository.findAll(pageable)
-                .map(mapper::mapToProductResponse);
+                .map(productMapper::mapToProductResponse);
     }
 
-    /**
-     * Delete product.
-     */
+    // Delete product.
     @Override
     @Transactional
     public void deleteProductById(Integer id) {
@@ -127,9 +117,7 @@ public class ProductServiceImp implements ProductService {
         log.info("Product deleted successfully. ProductId={}", id);
     }
 
-    /**
-     * Update existing product.
-     */
+    // Update existing product.
     @Override
     @Transactional
     public ProductResponse updateProduct(Integer id, ProductRequest request) {
@@ -149,12 +137,10 @@ public class ProductServiceImp implements ProductService {
         Product updatedProduct = productRepository.save(existingProduct);
         log.info("Product updated successfully. ProductId={}", updatedProduct.getId());
 
-        return mapper.mapToProductResponse(updatedProduct);
+        return productMapper.mapToProductResponse(updatedProduct);
     }
 
-    /**
-     * Search product.
-     */
+    // Search product.
     @Override
     @Transactional(readOnly = true)
     public Page<ProductResponse> searchProducts(String keyword, int page, int size) {
@@ -170,38 +156,63 @@ public class ProductServiceImp implements ProductService {
                 PageRequest.of(page, size, Sort.by("name").ascending());
 
         Page<Product> products = productRepository.searchProducts(keyword, pageable);
-        return products.map(mapper::mapToProductResponse);
+        return products.map(productMapper::mapToProductResponse);
     }
 
-    @Transactional(rollbackFor = ProductPurchaseException.class)
     @Override
+    @Transactional(readOnly = true)
+    public List<PurchaseResponse> validateProducts(List<PurchaseRequest> requests) {
+
+        log.info("Validating {} product(s)", requests == null ? 0 : requests.size());
+        // 1. Validate request
+        validatePurchaseRequests(requests);
+        // 2. Check duplicate product IDs
+        Map<Integer, PurchaseRequest> requestMap = buildRequestMap(requests);
+        // 3. Check product existence
+        List<Product> products = fetchProducts(requestMap);
+        // 4. Check stock availability
+        validateStockAvailability(products, requestMap);
+        // 5. Return validated product details (without deducting inventory)
+        List<PurchaseResponse> responses = new ArrayList<>();
+        for (Product product : products) {
+            PurchaseRequest request = requestMap.get(product.getId());
+            responses.add(
+                    productMapper.mapToproductPurchaseResponse(
+                            product,
+                            request.quantity()
+                    )
+            );
+        }
+        log.info("Successfully validated {} product(s)", responses.size());
+
+        return responses;
+    }
+
+    @Override
+    @Transactional
     public List<PurchaseResponse> purchaseProducts(List<PurchaseRequest> requests) {
 
         log.info("Purchase request received for {} product(s)",
                 requests == null ? 0 : requests.size());
 
+        // 1. Validate request
         validatePurchaseRequests(requests);
-
+        // 2. Check duplicate product IDs
         Map<Integer, PurchaseRequest> requestMap = buildRequestMap(requests);
-
+        // 3. Fetch products with pessimistic lock
         List<Product> products = fetchProductsForUpdate(requestMap);
-
+        // 4. Validate stock availability
         validateStockAvailability(products, requestMap);
-
-        List<PurchaseResponse> responses =
-                deductInventoryAndBuildResponse(products, requestMap);
-
+        // 5. Deduct inventory
+        List<PurchaseResponse> responses = deductInventory(products, requestMap);
+        // 6. Persist inventory changes
         productRepository.saveAll(products);
 
-        log.info("Purchase completed successfully for {} product(s)",
-                responses.size());
-
+        log.info("Purchase completed successfully for {} product(s)", products.size());
         return responses;
     }
 
-    /**
-     * Validates that the purchase request is not null or empty.
-     */
+    // Validates that the purchase request is not null or empty.
     private void validatePurchaseRequests(List<PurchaseRequest> requests) {
 
         if (requests == null || requests.isEmpty()) {
@@ -209,10 +220,9 @@ public class ProductServiceImp implements ProductService {
             throw new ProductPurchaseException("Purchase request cannot be empty");
         }
     }
-    /**
-     * Converts purchase requests into a map keyed by productId.
-     * Also prevents duplicate product IDs in a single request.
-     */
+
+    // Converts purchase requests into a map keyed by productId.
+    // Also prevents duplicate product IDs in a single request.
     private Map<Integer, PurchaseRequest> buildRequestMap(List<PurchaseRequest> requests) {
 
         return requests.stream()
@@ -230,10 +240,8 @@ public class ProductServiceImp implements ProductService {
                         }
                 ));
     }
-    /**
-     * Fetches products using pessimistic locking and validates
-     * that every requested product exists.
-     */
+
+    // Fetches products using pessimistic locking and validates that every requested product exists.
     private List<Product> fetchProductsForUpdate(Map<Integer, PurchaseRequest> requestMap) {
 
         List<Integer> productIds = new ArrayList<>(requestMap.keySet());
@@ -260,9 +268,7 @@ public class ProductServiceImp implements ProductService {
 
         return products;
     }
-    /**
-     * Ensures every requested product has sufficient inventory.
-     */
+    // Ensures every requested product has sufficient inventory.
     private void validateStockAvailability(
             List<Product> products,
             Map<Integer, PurchaseRequest> requestMap
@@ -289,90 +295,54 @@ public class ProductServiceImp implements ProductService {
             }
         }
     }
-    /**
-     * Deducts inventory and prepares purchase response.
-     */
-    private List<PurchaseResponse> deductInventoryAndBuildResponse(
+
+    // deducts and manage inventory
+    private List<PurchaseResponse> deductInventory(
             List<Product> products,
             Map<Integer, PurchaseRequest> requestMap
     ) {
 
         List<PurchaseResponse> responses = new ArrayList<>();
-
         for (Product product : products) {
-
-            PurchaseRequest request =
-                    requestMap.get(product.getId());
-
+            PurchaseRequest request = requestMap.get(product.getId());
             product.setAvailableQuantity(
                     product.getAvailableQuantity() - request.quantity()
             );
-
-            responses.add(
-                    mapper.mapToproductPurchaseResponse(
-                            product,
-                            request.quantity()
-                    )
-            );
-
+            responses.add(productMapper.mapToproductPurchaseResponse(
+                    product,request.quantity()
+            ));
             log.info(
                     "Inventory updated. ProductId={}, RemainingQuantity={}",
                     product.getId(),
                     product.getAvailableQuantity()
             );
         }
-
         return responses;
     }
 
-//    @Transactional(rollbackFor = ProductPurchaseException.class)
-//    @Override
-//    public List<PurchaseResponse> purchaseProducts(List<PurchaseRequest> requests) {
-//        if (requests == null || requests.isEmpty()) {
-//            throw new ProductPurchaseException("Purchase request cannot be empty");
-//        }
-//
-//        Map<Integer, PurchaseRequest> requestMap =
-//                requests.stream()
-//                        .collect(Collectors.toMap(
-//                                PurchaseRequest::productId,
-//                                Function.identity(),
-//                                (existing, duplicate) -> {
-//                                    throw new ProductPurchaseException(
-//                                            "Duplicate product ID found: "
-//                                                    + duplicate.productId()
-//                                    );
-//                                }
-//                        ));
-//
-//        List<Integer> productIds = new ArrayList<>(requestMap.keySet());
-//        List<Product> products = repository.findAllByIdInForUpdate(productIds);
-//
-//        Set<Integer> foundIds = products.stream().map(Product::getId).collect(Collectors.toSet());
-//        List<Integer> missingIds = productIds.stream().filter(id -> !foundIds.contains(id)).toList();
-//
-//        if (!missingIds.isEmpty()) {
-//            throw new ProductPurchaseException(
-//                    "Products not found: " + missingIds
-//            );
-//        }
-//
-//        List<PurchaseResponse> responses = new ArrayList<>();
-//
-//        for (Product product : products) {
-//            PurchaseRequest request = requestMap.get(product.getId());
-//            Integer requestedQuantity = request.quantity();
-//            if (product.getAvailableQuantity() < requestedQuantity) {
-//                throw new ProductPurchaseException(
-//                        "Insufficient stock for product ID: "
-//                                + product.getId()
-//                );
-//            }
-//
-//            product.setAvailableQuantity(product.getAvailableQuantity() - requestedQuantity);
-//            responses.add(mapper.mapToproductPurchaseResponse(product, requestedQuantity));
-//        }
-//        repository.saveAll(products);
-//        return responses;
-//    }
+    private List<Product> fetchProducts(Map<Integer, PurchaseRequest> requestMap) {
+
+        List<Integer> productIds = new ArrayList<>(requestMap.keySet());
+
+        List<Product> products =
+                productRepository.findAllByIdIn(productIds);
+
+        Set<Integer> foundIds = products.stream()
+                .map(Product::getId)
+                .collect(Collectors.toSet());
+
+        List<Integer> missingIds = productIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+
+        if (!missingIds.isEmpty()) {
+            log.warn("Requested products not found: {}", missingIds);
+
+            throw new ProductPurchaseException(
+                    "Products not found: " + missingIds
+            );
+        }
+
+        return products;
+    }
 }

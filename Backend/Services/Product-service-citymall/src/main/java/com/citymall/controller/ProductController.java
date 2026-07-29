@@ -43,19 +43,6 @@ public class ProductController {
         );
     }
 
-//    fetching all products
-//    @GetMapping
-//    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts(){
-//        List<ProductResponse> allProducts = service.findAllProducts();
-//        String msg = allProducts.isEmpty() ? "No Products Found" : "Products fetched successfully";
-//        return ResponseEntity.ok(
-//                ApiResponse.<List<ProductResponse>>builder()
-//                        .message(msg)
-//                        .success(true)
-//                        .data(allProducts)
-//                        .build()
-//        );
-//    }
 
     @GetMapping
     public ResponseEntity<PageResponse<ProductResponse>> getAllProducts(
@@ -149,11 +136,30 @@ public class ProductController {
 
         return ResponseEntity.ok(
                 ApiResponse.<List<PurchaseResponse>>builder()
-                        .message("product purchase list")
+                        .message("Inventory updated successfully")
                         .success(true)
                         .data(productPurchaseResponses)
                         .build()
         );
     }
+
+    @PostMapping("/validate")
+    public ResponseEntity<ApiResponse<List<PurchaseResponse>>> validateProduct(
+            @Valid
+            @RequestBody
+            List<PurchaseRequest> request
+    ){
+        List<PurchaseResponse> productPurchaseResponses = service.validateProducts(request);
+
+        return ResponseEntity.ok(
+                ApiResponse.<List<PurchaseResponse>>builder()
+                        .message("Validate Product list")
+                        .success(true)
+                        .data(productPurchaseResponses)
+                        .build()
+        );
+    }
+
+
 }
 

@@ -16,4 +16,5 @@ public interface ProductService {
     ProductResponse updateProduct(Integer id, ProductRequest request);
     List<PurchaseResponse> purchaseProducts(List<PurchaseRequest> request);
     Page<ProductResponse> searchProducts(String keyword, int page, int size);
+    List<PurchaseResponse> validateProducts(List<PurchaseRequest> requests);
 }

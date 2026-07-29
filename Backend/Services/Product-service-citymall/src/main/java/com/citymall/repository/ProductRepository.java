@@ -38,4 +38,6 @@ public interface ProductRepository extends JpaRepository<Product, Integer> {
             @Param("ids")
             List<Integer> ids
     );
+
+    List<Product> findAllByIdIn(List<Integer> ids);
 }
