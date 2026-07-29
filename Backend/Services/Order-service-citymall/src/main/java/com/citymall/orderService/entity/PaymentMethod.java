@@ -1,8 +1,8 @@
 package com.citymall.orderService.entity;
 
 public enum PaymentMethod {
-    CARD,
+    CREDIT_CARD,
     UPI,
-    COD,
-    WALLET
+    WALLET,
+    MASTER_CARD
 }

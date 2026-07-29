@@ -29,7 +29,7 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false)
-    private Long customerId;
+    private String customerId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

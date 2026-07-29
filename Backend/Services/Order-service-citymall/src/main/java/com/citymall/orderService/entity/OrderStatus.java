@@ -1,7 +1,9 @@
 package com.citymall.orderService.entity;
 
 public enum OrderStatus {
-    PLACED,
+    PENDING,
+    PAYMENT_PENDING,
+    PAID,
     CONFIRMED,
     SHIPPED,
     DELIVERED,
