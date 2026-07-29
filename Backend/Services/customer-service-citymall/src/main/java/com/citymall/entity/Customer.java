@@ -1,6 +1,7 @@
 package com.citymall.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -11,7 +12,12 @@ import lombok.*;
 @Setter
 @Getter
 @Entity
-@Table(name = "customer")
+@Table(
+        name = "customer",
+        indexes = {
+                @Index(name = "idx_customer_email", columnList = "email")
+        }
+)
 public class Customer {
 
     @Id
@@ -25,9 +31,11 @@ public class Customer {
     private String lastname;
 
     @NotBlank
+    @Column(nullable = false, unique = true)
     @Email
     private String email;
 
+    @Valid
     @Embedded
     private Address address;
 }

@@ -19,7 +19,7 @@ import java.util.List;
 @Validated
 public class CustomerController {
 
-    private final CustomerService service;
+    private final CustomerService customerService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<CustomerResponse>> createCustomer(
@@ -27,7 +27,7 @@ public class CustomerController {
             @RequestBody
             CustomerRequest customerRequest){
 
-        CustomerResponse savedCustomer = service.createCustomer(customerRequest);
+        CustomerResponse savedCustomer = customerService.createCustomer(customerRequest);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 ApiResponse.<CustomerResponse>builder()
@@ -41,7 +41,7 @@ public class CustomerController {
 
     @GetMapping("/{customerId}")
     public ResponseEntity<ApiResponse<CustomerResponse>> getCustomerById(@PathVariable String customerId){
-        CustomerResponse customerResponse = service.getCustomerById(customerId);
+        CustomerResponse customerResponse = customerService.getCustomerById(customerId);
         return ResponseEntity.ok(
                 ApiResponse.<CustomerResponse>builder()
                         .message("Customer fetched successfully with ID :"+customerId)
@@ -55,7 +55,7 @@ public class CustomerController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<CustomerResponse>>> getAllCustomers(){
 
-        List<CustomerResponse> customers = service.getAllCustomers();
+        List<CustomerResponse> customers = customerService.getAllCustomers();
         String message = customers.isEmpty()
                 ? "No customers found"
                 : "Customers fetched successfully";
@@ -77,10 +77,11 @@ public class CustomerController {
             @Valid
             @RequestBody
             CustomerRequest request){
-        CustomerResponse updatedCustomer = service.updateCustomer(customerId, request);
+        CustomerResponse updatedCustomer = customerService.updateCustomer(customerId, request);
         return ResponseEntity.ok(
                 ApiResponse.<CustomerResponse>builder()
                         .message("Customer updated successfully")
+                        .statusCode("200")
                         .success(true)
                         .data(updatedCustomer)
                         .build()
@@ -90,13 +91,13 @@ public class CustomerController {
 
     @DeleteMapping("/{customerId}")
     public ResponseEntity<Void> deleteCustomer(@PathVariable String customerId){
-        service.deleteCustomer(customerId);
+        customerService.deleteCustomer(customerId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/exists/{customerId}")
     public ResponseEntity<ApiResponse<Boolean>> isCustomerExist(@PathVariable String customerId) {
-        boolean exists = service.isCustomerExist(customerId);
+        boolean exists = customerService.isCustomerExist(customerId);
 
         return ResponseEntity.ok(
                 ApiResponse.<Boolean>builder()

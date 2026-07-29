@@ -1,5 +1,7 @@
 package com.citymall.entity;
 
+import jakarta.persistence.Embeddable;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 
@@ -9,9 +11,12 @@ import org.springframework.validation.annotation.Validated;
 @Setter
 @Getter
 @Validated
+//@Embeddable
 public class Address {
 
+    @NotBlank
     private String street;
     private String houseNumber;
+    @NotBlank
     private String zipCode;
 }

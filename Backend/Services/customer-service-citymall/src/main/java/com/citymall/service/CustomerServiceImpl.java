@@ -3,6 +3,7 @@ package com.citymall.service;
 import com.citymall.dto.CustomerRequest;
 import com.citymall.dto.CustomerResponse;
 import com.citymall.entity.Customer;
+import com.citymall.exception.BusinessException;
 import com.citymall.exception.ResourceNotFound;
 import com.citymall.mapper.CustomerMapper;
 import com.citymall.repository.CustomerRepository;
@@ -19,24 +20,28 @@ import java.util.List;
 public class CustomerServiceImpl implements CustomerService{
 
     private final CustomerRepository customerRepository;
-    private final CustomerMapper mapper;
+    private final CustomerMapper customerMapper;
 
     @Override
     public CustomerResponse createCustomer(CustomerRequest customerRequest) {
 
-        Customer customer = mapper.mapToCustomer(customerRequest);
+        Customer customer = customerMapper.mapToCustomer(customerRequest);
         if(customerRepository.existsByEmail(customer.getEmail())){
             log.info("Email already exists");
             throw new ResourceNotFound("Email already exists: " + customer.getEmail());
         }
         log.info("Created customer with details: {}", customer);
-        return mapper.mapToCustomerResponse(customerRepository.save(customer));
+        return customerMapper.mapToCustomerResponse(customerRepository.save(customer));
     }
 
     @Override
     public CustomerResponse getCustomerById(String id) {
-        var customer = customerRepository.findById(id).orElseThrow(()-> new ResourceNotFound("Customer not found with id: "+id));
-        return mapper.mapToCustomerResponse(customer);
+        log.info("Validating customer with id {}", id);
+        var customer = customerRepository.findById(id)
+                .orElseThrow(() ->
+                    new ResourceNotFound("Customer not found with id: " + id)
+                );
+        return customerMapper.mapToCustomerResponse(customer);
     }
 
     @Override
@@ -44,7 +49,7 @@ public class CustomerServiceImpl implements CustomerService{
         log.info("fetching all customers");
         List<Customer> customers = customerRepository.findAll();
         return customers.stream()
-                .map(mapper::mapToCustomerResponse)
+                .map(customerMapper::mapToCustomerResponse)
                 .toList();
     }
 
@@ -69,7 +74,7 @@ public class CustomerServiceImpl implements CustomerService{
 
         Customer updatedCustomer = customerRepository.save(existingCustomer);
 
-        return mapper.mapToCustomerResponse(updatedCustomer);
+        return customerMapper.mapToCustomerResponse(updatedCustomer);
     }
 
     @Override
