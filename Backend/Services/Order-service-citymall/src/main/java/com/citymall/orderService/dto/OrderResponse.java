@@ -8,9 +8,9 @@ import java.math.BigDecimal;
 public record OrderResponse(
         Long id,
         String orderNumber,
-        BigDecimal totalAmount,
+        BigDecimal amount,
         PaymentMethod paymentMethod,
-        Long customerId,
+        String customerId,
         OrderStatus status
 ) {
 }
