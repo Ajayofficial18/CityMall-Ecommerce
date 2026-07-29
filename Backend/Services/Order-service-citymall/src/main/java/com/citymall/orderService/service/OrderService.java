@@ -8,6 +8,6 @@ import java.util.List;
 public interface OrderService {
     OrderResponse createOrder(OrderRequest request);
     List<OrderResponse> findAllOrders();
-    OrderResponse findById(Integer id);
+    OrderResponse findById(Long id);
     List<OrderResponse> findByCustomerId(String customerId);
 }
