@@ -7,6 +7,14 @@ spring:
     url: jdbc:postgresql://localhost:5435/productdb?options=-c%20timezone=UTC
     username: postgres
     password: postgres
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2s
+  cache:
+    type: redis
   jpa:
     hibernate:
       ddl-auto: update

@@ -50,19 +50,10 @@ public class ProductController {
             @RequestParam(defaultValue = "10") int size
     ) {
 
-        Page<ProductResponse> response = service.findAllProducts(page, size);
+        PageResponse<ProductResponse> response =
+                service.findAllProducts(page, size);
 
-        return ResponseEntity.ok(
-                PageResponse.<ProductResponse>builder()
-                        .content(response.getContent())
-                        .page(response.getNumber())
-                        .size(response.getSize())
-                        .totalElements(response.getTotalElements())
-                        .totalPages(response.getTotalPages())
-                        .first(response.isFirst())
-                        .last(response.isLast())
-                        .build()
-        );
+        return ResponseEntity.ok(response);
     }
 
 //    fetcing product by id
@@ -109,15 +100,15 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ApiResponse<Page<ProductResponse>>> searchProducts(
+    public ResponseEntity<ApiResponse<PageResponse<ProductResponse>>> searchProducts(
             @RequestParam String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
 
-        Page<ProductResponse> response = service.searchProducts(keyword, page, size);
+        PageResponse<ProductResponse> response = service.searchProducts(keyword, page, size);
         return ResponseEntity.ok(
-                ApiResponse.<Page<ProductResponse>>builder()
+                ApiResponse.<PageResponse<ProductResponse>>builder()
                         .success(true)
                         .message("Search results fetched successfully")
                         .data(response)

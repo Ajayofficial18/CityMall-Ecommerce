@@ -1,5 +1,9 @@
 package com.citymall.service;
 
+import com.citymall.constant.CacheConstants;
+import com.citymall.response.PageResponse;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import com.citymall.dto.ProductRequest;
 import com.citymall.dto.ProductResponse;
 import com.citymall.dto.PurchaseRequest;
@@ -14,6 +18,7 @@ import com.citymall.repository.CategoryRepository;
 import com.citymall.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -60,7 +65,20 @@ public class ProductServiceImp implements ProductService {
     }
 
     // Creates a new product after validating that the provided category exists.
-    @Override
+    @Override@Caching(
+            evict = {
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_LIST_CACHE,
+                            allEntries = true
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_SEARCH_CACHE,
+                            allEntries = true
+                    )
+            }
+    )
     @Transactional
     public ProductResponse createProduct(ProductRequest request) {
 
@@ -83,11 +101,18 @@ public class ProductServiceImp implements ProductService {
     // Fetch product by id.
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+            cacheNames = CacheConstants.PRODUCT_CACHE,
+            key = "#id",
+            unless = "#result == null"
+    )
     public ProductResponse findProductById(Integer id) {
 
-        log.info("Fetching product with id={}", id);
+//        log.info("Fetching product with id={}", id);
+        log.info("Fetching product from DATABASE. ProductId={}", id);
 
         Product product = getProductOrThrow(id);
+        System.out.println(product.getPrice());
 
         return productMapper.mapToProductResponse(product);
     }
@@ -95,17 +120,55 @@ public class ProductServiceImp implements ProductService {
     // Fetch paginated products.
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> findAllProducts(int page, int size) {
+    @Cacheable(
+            cacheNames = CacheConstants.PRODUCT_LIST_CACHE,
+            key = "'page=' + #page + ':size=' + #size",
+            unless = "#result == null"
+    )
+    public PageResponse<ProductResponse> findAllProducts(int page, int size) {
 
-        log.info("Fetching products. Page={}, Size={}", page, size);
+        log.info(
+                "Fetching product list from database. Page={}, Size={}",
+                page,
+                size
+        );
 
         Pageable pageable = PageRequest.of(page, size);
-        return productRepository.findAll(pageable)
+
+        Page<ProductResponse> productPage = productRepository.findAll(pageable)
                 .map(productMapper::mapToProductResponse);
+
+        return PageResponse.<ProductResponse>builder()
+                .content(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .build();
     }
 
     // Delete product.
-    @Override
+    @Override@Caching(
+            evict = {
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_CACHE,
+                            key = "#id"
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_LIST_CACHE,
+                            allEntries = true
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_SEARCH_CACHE,
+                            allEntries = true
+                    )
+            }
+    )
     @Transactional
     public void deleteProductById(Integer id) {
 
@@ -119,6 +182,25 @@ public class ProductServiceImp implements ProductService {
 
     // Update existing product.
     @Override
+    @Caching(
+            evict = {
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_CACHE,
+                            key = "#id"
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_LIST_CACHE,
+                            allEntries = true
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_SEARCH_CACHE,
+                            allEntries = true
+                    )
+            }
+    )
     @Transactional
     public ProductResponse updateProduct(Integer id, ProductRequest request) {
 
@@ -141,22 +223,50 @@ public class ProductServiceImp implements ProductService {
     }
 
     // Search product.
+    // Search products with pagination and sorting.
+    @Cacheable(
+            cacheNames = CacheConstants.PRODUCT_SEARCH_CACHE,
+            key = "#keyword.toLowerCase() + ':page=' + #page + ':size=' + #size",
+            unless = "#result == null"
+    )
     @Override
     @Transactional(readOnly = true)
-    public Page<ProductResponse> searchProducts(String keyword, int page, int size) {
+    public PageResponse<ProductResponse> searchProducts(
+            String keyword,
+            int page,
+            int size
+    ) {
 
         if (keyword == null || keyword.isBlank()) {
             throw new BadRequestException("Keyword cannot be empty");
         }
 
-        log.info("Searching products. Keyword='{}', Page={}, Size={}",
-                keyword, page, size);
+        log.info(
+                "Searching products from database. Keyword='{}', Page={}, Size={}",
+                keyword,
+                page,
+                size
+        );
 
-        Pageable pageable =
-                PageRequest.of(page, size, Sort.by("name").ascending());
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by("name").ascending()
+        );
 
-        Page<Product> products = productRepository.searchProducts(keyword, pageable);
-        return products.map(productMapper::mapToProductResponse);
+        Page<ProductResponse> productPage =
+                productRepository.searchProducts(keyword, pageable)
+                        .map(productMapper::mapToProductResponse);
+
+        return PageResponse.<ProductResponse>builder()
+                .content(productPage.getContent())
+                .page(productPage.getNumber())
+                .size(productPage.getSize())
+                .totalElements(productPage.getTotalElements())
+                .totalPages(productPage.getTotalPages())
+                .first(productPage.isFirst())
+                .last(productPage.isLast())
+                .build();
     }
 
     @Override
@@ -188,7 +298,25 @@ public class ProductServiceImp implements ProductService {
         return responses;
     }
 
-    @Override
+    @Override@Caching(
+            evict = {
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_CACHE,
+                            allEntries = true
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_LIST_CACHE,
+                            allEntries = true
+                    ),
+
+                    @CacheEvict(
+                            cacheNames = CacheConstants.PRODUCT_SEARCH_CACHE,
+                            allEntries = true
+                    )
+            }
+    )
     @Transactional
     public List<PurchaseResponse> purchaseProducts(List<PurchaseRequest> requests) {
 
